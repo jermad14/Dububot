@@ -18,15 +18,54 @@ A simple Discord bot with Twitch integration.
 
 ### Installation
 
-1.  Clone the repository:
+#### 1. Clone the Repository
+
+First, clone the Dububot repository to your local machine:
+
+```bash
+git clone https://github.com/jermad14/Dububot.git
+cd Dububot
+```
+
+#### 2. Install Python and Dependencies
+
+**For Linux (Debian/Ubuntu):**
+
+1.  **Install Python 3 and pip:**
     ```bash
-    git clone https://github.com/jermad14/Dububot.git
-    cd Dububot
+    sudo apt update
+    sudo apt install python3 python3-pip
     ```
-2.  Install the required libraries:
+2.  **Install `discord.py`:**
     ```bash
-    pip install -U discord.py
+    pip3 install -U discord.py
     ```
+
+**For macOS:**
+
+1.  **Install Python 3 and pip (if not already installed via Homebrew):**
+    ```bash
+    brew install python
+    ```
+    (If you don't have Homebrew, you can install it from `https://brew.sh/`)
+    If Python 3 is already installed, ensure `pip3` is available.
+2.  **Install `discord.py`:**
+    ```bash
+    pip3 install -U discord.py
+    ```
+
+**For Windows:**
+
+1.  **Download and Install Python 3:**
+    *   Go to the official Python website: `https://www.python.org/downloads/windows/`
+    *   Download the latest Python 3 installer (e.g., "Windows installer (64-bit)").
+    *   Run the installer. **Crucially, make sure to check "Add Python to PATH" during installation.** This will allow you to use `python` and `pip` from the command prompt.
+2.  **Install `discord.py`:**
+    *   Open Command Prompt (search for "cmd" in the Start Menu).
+    *   Run the following command:
+        ```bash
+        pip install -U discord.py
+        ```
 
 ### Configuration
 
