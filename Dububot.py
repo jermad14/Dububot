@@ -1,6 +1,5 @@
 import discord
-from discord.ext.commands import Bot
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncio
 import datetime
 import time
@@ -13,12 +12,11 @@ import ctypes
 
 # local files
 import dubucore
-import modules
 from lib import TwitchClient
 
 # Sets window name of running application if on Windows
 if os.name == 'nt':
-    ctypes.windll.kernel32.SetCconsoleTitleW("Dububot")
+    ctypes.windll.kernel32.SetConsoleTitleW("Dububot")
 
 dubucore.configureLogging()
 dubulog = logging.getLogger(__name__)
@@ -38,76 +36,77 @@ discord_token = config.get('discord', 'token')
 twitch_token = config.get('twitch','client_id', fallback=None)
 
 
-# TODO: need a more modular setup that can be reloaded while running
-#dubuModules = modules.Modules(auth, config)
-#dubuModules.load()
-
-Client = discord.Client()
-client = commands.Bot(command_prefix = comm_pre)
+intents = discord.Intents.default()
+intents.message_content = True
+client = commands.Bot(command_prefix = comm_pre, intents=intents)
 
 
 @client.event
 async def on_ready():
     dubulog.info("Bot is online and connected to Discord!")
-    await client.change_presence(game=discord.Game(name="Dubu Dubu Dubu"))
+    await client.change_presence(activity=discord.Game(name="Dubu Dubu Dubu"))
 
-@client.event
+@client.listen()
 async def on_message(message):
-    userID = message.author.id
-    
+    if message.author.bot:
+        return
+
     greeting_list = ["HELLO", "HI"]
     contents = message.content.split(" ")
     for word in contents:
         if word.upper() in greeting_list:
-            await client.send_message(message.channel, "<@%s> 안녕 :heartbeat:" % (userID))
+            await message.channel.send(f"{message.author.mention} 안녕 :heartbeat:")
+            break
 
-    if message.content.upper().startswith(comm_pre + 'PING'):
-        await client.send_message(message.channel, "<@%s> pong!" % (userID))
+@client.command()
+async def ping(ctx):
+    await ctx.send(f"{ctx.author.mention} pong!")
 
-    if message.content.upper().startswith(comm_pre + 'STATUS') and message.author.id == owner:
-        game = message.content[8:]
-        await client.change_presence(game=discord.Game(name=game))
-        await client.send_message(message.channel, "Status has been updated to " + game)
+@client.command()
+@commands.is_owner()
+async def status(ctx, *, game: str):
+    await client.change_presence(activity=discord.Game(name=game))
+    await ctx.send(f"Status has been updated to {game}")
 
+@tasks.loop(seconds=45)
 async def twitch_loop():
     if twitch_token is None or twitch_token == '':
         dubulog.warning('Twitch token missing. No monitoring will take place.')
         return
     
-    await client.wait_until_ready()
-    await asyncio.sleep(2)
-
     twClient = TwitchClient.TwitchClient(twitch_token)
-    announceChannel = client.get_channel(config.get('twitch','AnnounceChannelId'))
+    announceChannel = client.get_channel(int(config.get('twitch','AnnounceChannelId')))
+    usernames = config.get('twitch','MonitorChannels').split(',')
+
+    live = await twClient.update_live_list(usernames)
+
+    for s in live['started'].values():
+        embed = twitch_start_embed(s)
+        message = twitch_start_message(s)
+        dubulog.info("Twitch stream started: {} ({}), {}, {}"\
+            .format(s['user']['login'], s['id'], s['game']['name'], s['title']))
+        await announceChannel.send(content=message, embed=embed)
+
+    for s in live['stopped'].values():
+        message = "{} has ended their stream ({})."\
+            .format(s['user']['display_name'], s['id'])
+        dubulog.info("Twitch stream stopped: {} ({})"\
+            .format(s['user']['login'], s['id']))
+        await announceChannel.send(content=message)
+
+    for s in live['updated'].values():
+        embed = twitch_start_embed(s)
+        message = twitch_start_message(s)
+        dubulog.info("Twitch stream updated: {} ({}), {}, {}"\
+            .format(s['user']['login'], s['id'], s['game']['name'], s['title']))
+        await announceChannel.send(content=message, embed=embed)
+
+@twitch_loop.before_loop
+async def before_twitch_loop():
+    await client.wait_until_ready()
+    dubulog.info('Starting Twitch monitor loop.')
     usernames = config.get('twitch','MonitorChannels').split(',')
     dubulog.info('Monitoring twitch channels: {}'.format(str(usernames)))
-
-    while not client.is_closed:
-        live = await twClient.update_live_list(usernames)
-        #pprint(live)
-
-        for s in live['started'].values():
-            embed = twitch_start_embed(s)
-            message = twitch_start_message(s)
-            dubulog.info("Twitch stream started: {} ({}), {}, {}"\
-                .format(s['user']['login'], s['id'], s['game']['name'], s['title']))
-            await client.send_message(announceChannel, content=message, embed=embed)
-
-        for s in live['stopped'].values():
-            message = "{} has ended their stream ({})."\
-                .format(s['user']['display_name'], s['id'])
-            dubulog.info("Twitch stream stopped: {} ({})"\
-                .format(s['user']['login'], s['id']))
-            await client.send_message(announceChannel, content=message)
-
-        for s in live['updated'].values():
-            embed = twitch_start_embed(s)
-            message = twitch_start_message(s)
-            dubulog.info("Twitch stream updated: {} ({}), {}, {}"\
-                .format(s['user']['login'], s['id'], s['game']['name'], s['title']))
-            await client.send_message(announceChannel, content=message, embed=embed)
-
-        await asyncio.sleep(45)
 
 def twitch_start_message(stream):
     return "{0} is live playing {1}! https://www.twitch.tv/{2}".format(
@@ -137,5 +136,5 @@ def twitch_start_embed(stream):
          .set_image(url=stream['thumbnail_url'].format(width=1024, height=576) + '?t={}'.format(time.time()))
     return embed
 
-client.loop.create_task(twitch_loop())
+twitch_loop.start()
 client.run(discord_token)
