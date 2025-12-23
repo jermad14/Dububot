@@ -11,11 +11,6 @@ A simple Discord bot with Twitch integration.
 
 ## Getting Started
 
-### Prerequisites
-
-*   Python 3.6+
-*   `discord.py` library
-
 ### Installation
 
 #### 1. Clone the Repository
@@ -36,9 +31,9 @@ cd Dububot
     sudo apt update
     sudo apt install python3 python3-pip
     ```
-2.  **Install `discord.py`:**
+2.  **Install Dependencies:**
     ```bash
-    pip3 install -U discord.py
+    pip3 install -r requirements.txt
     ```
 
 **For macOS:**
@@ -49,9 +44,9 @@ cd Dububot
     ```
     (If you don't have Homebrew, you can install it from `https://brew.sh/`)
     If Python 3 is already installed, ensure `pip3` is available.
-2.  **Install `discord.py`:**
+2.  **Install Dependencies:**
     ```bash
-    pip3 install -U discord.py
+    pip3 install -r requirements.txt
     ```
 
 **For Windows:**
@@ -60,11 +55,11 @@ cd Dububot
     *   Go to the official Python website: `https://www.python.org/downloads/windows/`
     *   Download the latest Python 3 installer (e.g., "Windows installer (64-bit)").
     *   Run the installer. **Crucially, make sure to check "Add Python to PATH" during installation.** This will allow you to use `python` and `pip` from the command prompt.
-2.  **Install `discord.py`:**
+2.  **Install Dependencies:**
     *   Open Command Prompt (search for "cmd" in the Start Menu).
     *   Run the following command:
         ```bash
-        pip install -U discord.py
+        pip install -r requirements.txt
         ```
 
 ### Configuration
@@ -77,6 +72,14 @@ cd Dububot
     *   `client_id`: Your Twitch client ID.
     *   `AnnounceChannelId`: The ID of the Discord channel where you want to send Twitch announcements.
     *   `MonitorChannels`: A comma-separated list of Twitch channel names to monitor.
+
+### Launching the Bot
+
+After completing the installation and configuration, you can launch the bot using the following command from the project's root directory:
+
+```bash
+python3 Dububot.py
+```
 
 ## Usage
 
