@@ -78,6 +78,14 @@ cd Dububot
     *   `AnnounceChannelId`: The ID of the Discord channel where you want to send Twitch announcements.
     *   `MonitorChannels`: A comma-separated list of Twitch channel names to monitor.
 
+### Launching the Bot
+
+After completing the installation and configuration, you can launch the bot using the following command from the project's root directory:
+
+```bash
+python3 Dububot.py
+```
+
 ## Usage
 
 *   `!ping`: The bot will reply with "pong!".
